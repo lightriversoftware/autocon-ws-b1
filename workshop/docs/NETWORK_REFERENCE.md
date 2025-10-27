@@ -40,12 +40,12 @@ A practical guide to the network topology and SDK for building AI agents.
 from network_simulator_client import NetworkSimulatorClient
 
 # With context manager (recommended)
-with NetworkSimulatorClient(base_url="http://localhost:8003") as client:
+with NetworkSimulatorClient() as client:  # Uses BACKEND_URL from environment
     # Your code here
     pass
 
 # Or manual management
-client = NetworkSimulatorClient(base_url="http://localhost:8003")
+client = NetworkSimulatorClient()  # Uses BACKEND_URL from environment
 # ... use client ...
 client.close()
 ```
@@ -457,7 +457,7 @@ def calculate_direct_distance(client, node1_uuid, node2_uuid):
 ## For More Information
 
 - **Full SDK Documentation**: `../README.md`
-- **API Interactive Docs**: http://localhost:8003/docs
+- **API Interactive Docs**: ${BACKEND_URL}/docs
 - **Test Report**: `../TEST_REPORT.md`
 - **Example Scripts**: `../examples/`
 

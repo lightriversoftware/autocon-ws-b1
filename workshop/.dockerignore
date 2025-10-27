@@ -1,0 +1,13 @@
+# Keep the build context small and secrets out of the image layers.
+.git
+.gitignore
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.swp
+*.swo
+.env
+.env.*
+*.pem
+*.key

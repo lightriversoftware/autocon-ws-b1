@@ -641,7 +641,7 @@ Run this exploration script:
 ```python
 from network_simulator_client import NetworkSimulatorClient
 
-with NetworkSimulatorClient(base_url="http://localhost:8003") as client:
+with NetworkSimulatorClient()  # Uses BACKEND_URL from environment as client:
     # 1. Network overview
     stats = client.get_database_stats()
     print(f"Network: {stats.nodes} nodes, {stats.edges} edges, {stats.services} services")
@@ -770,7 +770,7 @@ def get_network_nodes():
 
     Returns a list of nodes with name, UUID, capacity, and location.
     """
-    client = NetworkSimulatorClient(base_url="http://localhost:8003")
+    client = NetworkSimulatorClient()  # Uses BACKEND_URL from environment
     nodes = client.get_nodes()
     client.close()
 
@@ -803,7 +803,7 @@ def find_route(source_uuid: str, destination_uuid: str, demand_gbps: float = 5.0
     Returns:
         Route information with path and capacity details
     """
-    client = NetworkSimulatorClient(base_url="http://localhost:8003")
+    client = NetworkSimulatorClient()  # Uses BACKEND_URL from environment
 
     try:
         route = client.compute_route(source_uuid, destination_uuid, demand_gbps)
@@ -851,7 +851,7 @@ print(result.final_output)
 
 ```python
 # Get node UUIDs first
-client = NetworkSimulatorClient(base_url="http://localhost:8003")
+client = NetworkSimulatorClient()  # Uses BACKEND_URL from environment
 nodes = client.get_nodes()
 source = nodes[0]
 dest = nodes[-1]
@@ -906,7 +906,7 @@ Your agent should:
 **Issue**: Route finding fails
 
 - Check that source and destination UUIDs are valid
-- Verify the API is running (curl http://localhost:8003/health)
+- Verify the API is running (curl ${BACKEND_URL}/health)
 - Try a smaller demand_gbps value
 
 **Issue**: Agent output is messy
@@ -1011,7 +1011,7 @@ def create_network_service(
     Returns:
         Service creation result with UUID
     """
-    client = NetworkSimulatorClient(base_url="http://localhost:8003")
+    client = NetworkSimulatorClient()  # Uses BACKEND_URL from environment
 
     try:
         # Create service object
@@ -1061,7 +1061,7 @@ def verify_service(service_uuid: str):
     Returns:
         Service details or error
     """
-    client = NetworkSimulatorClient(base_url="http://localhost:8003")
+    client = NetworkSimulatorClient()  # Uses BACKEND_URL from environment
 
     try:
         service = client.get_service(service_uuid)
@@ -1100,7 +1100,7 @@ def delete_network_service(service_uuid: str):
     Returns:
         Deletion result
     """
-    client = NetworkSimulatorClient(base_url="http://localhost:8003")
+    client = NetworkSimulatorClient()  # Uses BACKEND_URL from environment
 
     try:
         client.delete_service(service_uuid)
@@ -1453,7 +1453,7 @@ Advanced topics to explore:
 ### Resources
 
 - OpenAI Agents SDK: https://openai.github.io/openai-agents-python/
-- Network Simulator API: http://localhost:8003/docs
+- Network Simulator API: ${BACKEND_URL}/docs
 - SDK Documentation: ../README.md
 
 ---
