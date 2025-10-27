@@ -1,0 +1,83 @@
+name: Build & Push Workshop Image
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read # 4. Needed for checkout
+  packages: write # 5. Push to GHCR
+
+env:
+  REGISTRY: ghcr.io
+  # 6. Image name in GHCR. github.repository = owner/repo
+  GHCR_IMAGE: ghcr.io/${{ github.repository }}/workshop
+  # 7. Path to your workshop subdirectory (where the Dockerfile lives)
+  DOCKER_CONTEXT: ./workshop/
+  DOCKERFILE: ./path/to/workshop-subdir/Dockerfile
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4 # 8. Pull the repo contents
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: all # 9. Enable cross-arch builds if you want
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3 # 10. Buildx for caching and multi-arch
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3 # 11. Auth to ghcr.io
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/network_simulator
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build & Push
+        uses: docker/build-push-action@v6 # 13. Build then push to GHCR
+        with:
+          context: ${{ env.DOCKER_CONTEXT }} # 14. Build context is your workshop subdir
+          file: ${{ env.DOCKERFILE }} # 15. Dockerfile path in that subdir
+          push: ${{ github.event_name != 'pull_request' }}
+          platforms: linux/amd64,linux/arm64 # 16. Add linux/arm64 if you need Apple Silicon
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha # 17. Use GitHub Actions cache
+          cache-to: type=gha,mode=max
+
+      - name: Generate artifact attestation
+        if: github.event_name != 'pull_request'
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ github.repository_owner }}/network_simulator
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+        continue-on-error: true
