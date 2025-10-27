@@ -16,7 +16,6 @@ env:
   REGISTRY: ghcr.io
   # Image path in GHCR (owner/repo/workshop)
   IMAGE_NAME: ${{ github.repository }}/workshop
-  GHCR_IMAGE: ghcr.io/${{ env.IMAGE_NAME }}
   # Path to your workshop subdirectory (Dockerfile lives here)
   BUILD_CONTEXT: ./workshop
   DOCKERFILE: ./workshop/Dockerfile
@@ -54,7 +53,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.GHCR_IMAGE }}
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/workshop
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -79,7 +78,7 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: actions/attest-build-provenance@v1
         with:
-          subject-name: ${{ env.GHCR_IMAGE }} # use your workshop image
+          subject-name: ${{ env.REGISTRY }}/${{ github.repository_owner }}/workshop # use your workshop image
           subject-digest: ${{ steps.build.outputs.digest }}
           push-to-registry: true
         continue-on-error: true
