@@ -15,16 +15,14 @@ docker pull ghcr.io/lightriversoftware/network_simulator:latest
 mkdir -p ./data ./output
 
 # Run the network simulator
-docker run -d \
-  --name network-simulator \
+docker run \
+  --name network_simulator \
   -p 8003:8003 \
   -v $(pwd)/data:/app/data \
   -v $(pwd)/output:/app/output \
-  -e FORCE_REBUILD=false \
-  -e SKIP_VERIFICATION=false \
-  -e GENERATE_SERVICES=true \
-  -e NUM_SERVICES=100 \
-  ghcr.io/lightriversoftware/network_simulator:latest
+  -e PYTHONUNBUFFERED=1 \
+  -it \
+  ghcr.io/lightriversoftware/network-simulator:latest
 
 # Verify it's running
 curl http://localhost:8003/health
