@@ -21,7 +21,8 @@ from api.api_models import (
     ServiceCreate, ServiceResponse,
     EdgeUtilizationResponse, CapacityViolationResponse,
     DatabaseStatsResponse, HealthResponse, ErrorResponse,
-    RouteRequest, RouteResponse, RouteNotFoundResponse
+    RouteRequest, RouteResponse, RouteNotFoundResponse,
+    VisualizationResponse
 )
 
 
@@ -1274,3 +1275,89 @@ async def compute_route_astar_get(
         demand_gbps=demand_gbps
     )
     return await compute_route_astar(route_request)
+
+
+# ==================== Visualization Endpoints ====================
+
+@app.post(
+    "/visualizations/generate",
+    response_model=VisualizationResponse,
+    tags=["visualizations"],
+    summary="Generate network visualizations",
+    description="""
+    Generate all network visualizations on-demand:
+    - Network map (geographic node locations)
+    - Connection map (topology with connections)
+    - Capacity distribution (histograms)
+    - Services export (JSON file)
+
+    **Use Cases:**
+    - Initial visualization after database creation
+    - Regenerate after network changes
+    - Update visualizations after adding/removing services
+
+    **Performance:** Takes 1-3 seconds depending on network size.
+    """,
+    responses={
+        500: {"model": ErrorResponse, "description": "Visualization generation failed"}
+    }
+)
+async def generate_visualizations():
+    """Generate network visualizations and export services to JSON."""
+    import time
+    from pathlib import Path
+    from core.config_loader import load_config
+    from database.db_to_dataframe import db_to_nodes_dataframe, db_to_edges_dataframe
+    from visualization.visualizer import NetworkVisualizer
+    from database.json_exporter import export_services_to_json
+
+    start_time = time.time()
+
+    try:
+        db_instance = get_db()
+        config = load_config()
+
+        # Check if database has data
+        stats = db_instance.get_stats()
+        if stats['nodes'] == 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Cannot generate visualizations: database is empty"
+            )
+
+        # Convert database to DataFrames
+        df_nodes = db_to_nodes_dataframe(db_instance)
+        df_edges = db_to_edges_dataframe(db_instance)
+
+        # Generate visualizations
+        visualizer = NetworkVisualizer(output_dir=config.output_dir)
+
+        network_map_path = visualizer.create_network_map(df_nodes)
+        connection_map_path = visualizer.create_connection_map(df_nodes, df_edges)
+        distribution_path = visualizer.create_capacity_distribution(df_nodes, df_edges)
+
+        # Export services to JSON
+        export_path = Path(config.data_dir) / "services_export.json"
+        export_services_to_json(db_instance, str(export_path))
+
+        # Calculate generation time
+        generation_time_ms = (time.time() - start_time) * 1000
+
+        return VisualizationResponse(
+            message="Visualizations generated successfully",
+            visualizations={
+                "network_map": str(network_map_path),
+                "connection_map": str(connection_map_path),
+                "capacity_distribution": str(distribution_path)
+            },
+            export_path=str(export_path),
+            generation_time_ms=generation_time_ms
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate visualizations: {str(e)}"
+        )
