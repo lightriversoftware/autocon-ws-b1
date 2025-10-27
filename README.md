@@ -1,4 +1,4 @@
-# Network Agents Workshop
+## Quick Start
 
 This repository contains hands-on exercises for building AI agents that interact with network infrastructure through a simulated network environment. Participants will learn to create agents for network support, planning, and provisioning tasks.
 
@@ -213,19 +213,8 @@ All three commands should complete without errors. If you encounter any issues, 
 ### Quick Start
 
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd autocon-ws-b1
-
-# Start everything with one command
-docker-compose up -d
-
-# Enter the workshop environment
-docker-compose exec workshop bash
-
-# Verify setup is working
-verify-setup
-```
+# Pull the latest network simulator image
+docker pull ghcr.io/lightriversoftware/network_simulator:latest
 
 That's it! The setup includes:
 
@@ -289,12 +278,16 @@ docker pull ghcr.io/OWNER/network-simulator:latest
 
 # Run with persistent data
 mkdir -p ./data ./output
-docker run -d \
-  --name network-simulator \
+
+# Run the network simulator
+docker run \
+  --name network_simulator \
   -p 8003:8003 \
   -v $(pwd)/data:/app/data \
   -v $(pwd)/output:/app/output \
-  ghcr.io/OWNER/network-simulator:latest
+  -e PYTHONUNBUFFERED=1 \
+  -it \
+  ghcr.io/lightriversoftware/network-simulator:latest
 
 # Verify it's running
 curl http://localhost:8003/health
@@ -499,8 +492,10 @@ ruff check net_agents/
 
 ## License
 
-This workshop is part of the AutoCon project.
+# Stop the simulator
+docker stop network-simulator
 
----
+# Remove the container
+docker rm network-simulator
 
 **Ready to start?** Open this repository in VSCode with the Dev Containers extension, or follow the setup instructions above. Begin with `ex0_verify_setup.py` to ensure everything is working correctly.
