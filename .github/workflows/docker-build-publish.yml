@@ -17,6 +17,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
+      attestations: write
 
     steps:
     - name: Checkout repository
@@ -65,3 +67,4 @@ jobs:
         subject-name: ${{ env.REGISTRY }}/${{ github.repository_owner }}/network_simulator
         subject-digest: ${{ steps.build.outputs.digest }}
         push-to-registry: true
+      continue-on-error: true
