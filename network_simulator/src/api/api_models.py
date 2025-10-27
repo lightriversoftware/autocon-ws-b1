@@ -4,7 +4,7 @@ Provides schema definitions for OpenAPI/Swagger documentation.
 """
 
 from pydantic import BaseModel, Field, field_validator, ConfigDict
-from typing import List, Optional
+from typing import List, Optional, Dict
 from datetime import datetime
 
 
@@ -375,6 +375,30 @@ class RouteNotFoundResponse(BaseModel):
                 "demand_gbps": 500.0,
                 "error": "No feasible route found",
                 "reason": "No path exists with sufficient capacity for demand of 500.0 Gbps"
+            }
+        ]
+    })
+
+
+# ==================== Visualization Models ====================
+
+class VisualizationResponse(BaseModel):
+    """Response model for visualization generation."""
+    message: str = Field(..., description="Success message")
+    visualizations: Dict[str, str] = Field(..., description="Map of visualization names to file paths")
+    export_path: Optional[str] = Field(None, description="Path to services export JSON file")
+    generation_time_ms: float = Field(..., description="Time taken to generate visualizations in milliseconds")
+    model_config = ConfigDict(json_schema_extra={
+        "examples": [
+            {
+                "message": "Visualizations generated successfully",
+                "visualizations": {
+                    "network_map": "output/network_map.png",
+                    "connection_map": "output/network_connections_map.png",
+                    "capacity_distribution": "output/capacity_distribution.png"
+                },
+                "export_path": "data/services_export.json",
+                "generation_time_ms": 1542.3
             }
         ]
     })
