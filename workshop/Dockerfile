@@ -8,6 +8,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
     openssh-server tini gosu ca-certificates  rsync \
+    vim emacs-nox \
     && rm -rf /var/lib/apt/lists/*
 
 # 5. SSHD needs this directory to exist.
