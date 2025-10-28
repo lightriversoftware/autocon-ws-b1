@@ -107,7 +107,7 @@ workshop/
 
 - **OpenAI Agents SDK**: https://openai.github.io/openai-agents-python/
 - **OpenAI API Docs**: https://platform.openai.com/docs
-- **Network Simulator**: http://localhost:8003/docs (when running)
+- **Network Simulator**: ${BACKEND_URL}/docs (when running)
 - **SDK Documentation**: ../README.md
 
 ## License

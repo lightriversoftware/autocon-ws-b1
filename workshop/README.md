@@ -35,7 +35,7 @@ pip install -r requirements.txt
 from network_simulator_client import NetworkSimulatorClient
 
 # Create client
-client = NetworkSimulatorClient(base_url="http://localhost:8003")
+client = NetworkSimulatorClient(base_url="${BACKEND_URL}")
 
 # Check API health
 health = client.health_check()
@@ -54,7 +54,7 @@ client.close()
 ```python
 from network_simulator_client import NetworkSimulatorClient
 
-with NetworkSimulatorClient(base_url="http://localhost:8003") as client:
+with NetworkSimulatorClient(base_url="${BACKEND_URL}") as client:
     # Get database statistics
     stats = client.get_database_stats()
     print(f"Nodes: {stats.nodes}, Edges: {stats.edges}, Services: {stats.services}")
@@ -71,7 +71,7 @@ with NetworkSimulatorClient(base_url="http://localhost:8003") as client:
 
 ```python
 NetworkSimulatorClient(
-    base_url="http://localhost:8003",  # API base URL
+    base_url="${BACKEND_URL}",  # API base URL
     timeout=30.0,                       # Request timeout in seconds
     max_retries=3,                      # Maximum retry attempts
     verify_ssl=True                     # Verify SSL certificates

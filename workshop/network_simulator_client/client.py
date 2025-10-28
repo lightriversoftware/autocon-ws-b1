@@ -5,6 +5,7 @@ This module provides a comprehensive, production-ready client for the Network
 Simulator API with both synchronous and asynchronous support.
 """
 
+import os
 import httpx
 from typing import List, Optional, Dict, Any
 
@@ -47,13 +48,13 @@ class NetworkSimulatorClient:
     and capacity analytics.
 
     Args:
-        base_url: Base URL of the Network Simulator API (default: http://localhost:8003)
+        base_url: Base URL of the Network Simulator API (default: BACKEND_URL env var or http://localhost:8003)
         timeout: Request timeout in seconds (default: 30.0)
         max_retries: Maximum number of retry attempts for failed requests (default: 3)
         verify_ssl: Whether to verify SSL certificates (default: True)
 
     Example:
-        >>> client = NetworkSimulatorClient(base_url="http://localhost:8003")
+        >>> client = NetworkSimulatorClient()  # Uses BACKEND_URL env var
         >>> health = client.health_check()
         >>> nodes = client.get_nodes()
         >>> print(f"Found {len(nodes)} nodes")
@@ -66,7 +67,7 @@ class NetworkSimulatorClient:
 
     def __init__(
         self,
-        base_url: str = "http://localhost:8003",
+        base_url: str = os.getenv("BACKEND_URL", "http://localhost:8003"),
         timeout: float = 30.0,
         max_retries: int = 3,
         verify_ssl: bool = True,

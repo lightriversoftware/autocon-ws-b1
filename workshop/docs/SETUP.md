@@ -96,7 +96,7 @@ cd ../../network_simulator
 docker compose up --build -d
 
 # Verify it's running
-curl http://localhost:8003/health
+curl ${BACKEND_URL}/health
 ```
 
 You should see a response like:
@@ -113,8 +113,8 @@ You should see a response like:
 
 Once running, you can explore the API:
 
-- **Swagger UI**: [http://localhost:8003/docs](http://localhost:8003/docs)
-- **ReDoc**: [http://localhost:8003/redoc](http://localhost:8003/redoc)
+- **Swagger UI**: [${BACKEND_URL}/docs](${BACKEND_URL}/docs)
+- **ReDoc**: [${BACKEND_URL}/redoc](${BACKEND_URL}/redoc)
 
 ---
 
@@ -138,7 +138,7 @@ Before building agents, let's explore what you'll be working with:
 ```python
 from network_simulator_client import NetworkSimulatorClient
 
-with NetworkSimulatorClient(base_url="http://localhost:8003") as client:
+with NetworkSimulatorClient() as client:  # Uses BACKEND_URL from environment
     # Get network overview
     stats = client.get_database_stats()
     print(f"Network: {stats.nodes} nodes, {stats.edges} edges")
@@ -255,7 +255,7 @@ asyncio.run(main())
 ```python
 from network_simulator_client import NetworkSimulatorClient
 
-client = NetworkSimulatorClient(base_url="http://localhost:8003")
+client = NetworkSimulatorClient()  # Uses BACKEND_URL from environment
 
 # Get nodes
 nodes = client.get_nodes()
@@ -293,7 +293,7 @@ See [NETWORK_REFERENCE.md](NETWORK_REFERENCE.md) for complete details.
 
 - Check if the simulator is running: `docker ps | grep network`
 - Start it if needed: `cd network_simulator && docker compose up -d`
-- Verify it's healthy: `curl http://localhost:8003/health`
+- Verify it's healthy: `curl ${BACKEND_URL}/health`
 - Check port 8003 isn't being used by another service
 
 ### OpenAI API Key Issues
@@ -362,7 +362,7 @@ During the workshop:
 
 - **OpenAI Agents SDK Docs**: https://openai.github.io/openai-agents-python/
 - **OpenAI API Reference**: https://platform.openai.com/docs/api-reference
-- **Network Simulator API Docs**: http://localhost:8003/docs (when running)
+- **Network Simulator API Docs**: ${BACKEND_URL}/docs (when running)
 - **Network Simulator Client README**: ../README.md
 
 ---
