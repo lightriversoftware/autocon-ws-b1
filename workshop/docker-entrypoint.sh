@@ -1,49 +1,85 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# 1) Prepare a matching group and user so host-mounted files have sane ownership.
+# --- 0) Inputs expected from `docker run -e ...` ---
+# USER_NAME : login name to create (e.g., "spatel")
+# USER_UID  : numeric UID to match host user (avoids permission issues)
+# USER_GID  : numeric GID to match host user's primary group
+# SHELL     : preferred shell (usually /bin/bash)
+
+# --- 1) Ensure group + user exist with requested IDs ---
+# Create (or reuse) a group with GID=USER_GID. If it already exists under
+# another name, groupadd will fail; we ignore errors to keep idempotency.
 if ! getent group "${USER_GID}" >/dev/null 2>&1; then
-  # If the group id exists under a different name, reuse it; else create new.
   groupadd -g "${USER_GID}" "${USER_NAME}" 2>/dev/null || true
 fi
 
+# Create the user if missing, with home dir and requested shell.
+# If it already exists (e.g., container restarted), do nothing.
 if ! id -u "${USER_NAME}" >/dev/null 2>&1; then
   useradd -m -u "${USER_UID}" -g "${USER_GID}" -s "${SHELL}" "${USER_NAME}"
 fi
 
-# 2) Ensure home and .ssh exist with correct permissions (mount will override if provided).
 HOME_DIR="/home/${USER_NAME}"
-mkdir -p "${HOME_DIR}/.ssh"
-chmod 700 "${HOME_DIR}/.ssh"
-# Provide a placeholder authorized_keys if none is mounted.
-: > "${HOME_DIR}/.ssh/authorized_keys" || true
-chmod 600 "${HOME_DIR}/.ssh/authorized_keys"
-chown -R "${USER_UID}:${USER_GID}" "${HOME_DIR}"
 
-# 3) Symlink workshop content into user's home for convenience (no overwrite).
-#    Users will see ~/workshop pointing to the baked /opt/workshop.
-if [ ! -e "${HOME_DIR}/workshop" ]; then
-  ln -s /opt/workshop "${HOME_DIR}/workshop"
-  chown -h "${USER_UID}:${USER_GID}" "${HOME_DIR}/workshop"
+# --- 2) Prepare ~/.ssh but be polite with read-only mounts ---
+# Some hosts mount either ~/.ssh or just authorized_keys read-only into the container.
+# We only create/chmod when paths are writable.
+
+# Create ~/.ssh if possible (it's usually writable; authorized_keys may be RO).
+mkdir -p "${HOME_DIR}/.ssh" 2>/dev/null || true
+
+# If the directory itself is writable, enforce 700 perms.
+if [ -d "${HOME_DIR}/.ssh" ] && [ -w "${HOME_DIR}/.ssh" ]; then
+  chmod 700 "${HOME_DIR}/.ssh" || true
 fi
 
-# 4) Make /workspace owned by the user (handy when not mounting a volume).
+# If authorized_keys doesn't exist and the directory is writable, create an empty file.
+if [ ! -e "${HOME_DIR}/.ssh/authorized_keys" ] && [ -w "${HOME_DIR}/.ssh" ]; then
+  : > "${HOME_DIR}/.ssh/authorized_keys" || true
+fi
+
+# If authorized_keys exists *and is writable*, enforce 600; skip if it's a RO bind mount.
+if [ -e "${HOME_DIR}/.ssh/authorized_keys" ] && [ -w "${HOME_DIR}/.ssh/authorized_keys" ]; then
+  chmod 600 "${HOME_DIR}/.ssh/authorized_keys" || true
+fi
+
+# Chown what we safely can (skip if RO). We don't recurse over entire HOME to avoid RO errors.
+chown "${USER_UID}:${USER_GID}" "${HOME_DIR}" 2>/dev/null || true
+chown "${USER_UID}:${USER_GID}" "${HOME_DIR}/.ssh" 2>/dev/null || true
+chown "${USER_UID}:${USER_GID}" "${HOME_DIR}/.ssh/authorized_keys" 2>/dev/null || true
+
+# --- 3) Convenience symlink to baked workshop content ---
+# Students get ~/workshop → /opt/workshop (baked into the image).
+if [ ! -e "${HOME_DIR}/workshop" ]; then
+  ln -s /opt/workshop "${HOME_DIR}/workshop" 2>/dev/null || true
+  chown -h "${USER_UID}:${USER_GID}" "${HOME_DIR}/workshop" 2>/dev/null || true
+fi
+
+# --- 4) Writable workspace for student output ---
+# /workspace is where you'll bind-mount host storage; make sure it's owned by the student.
 mkdir -p /workspace
-chown "${USER_UID}:${USER_GID}" /workspace
+chown "${USER_UID}:${USER_GID}" /workspace 2>/dev/null || true
 
-# 5) Tweak a couple sshd settings at runtime (idempotent).
-#    - Disallow password logins; keys only.
-#    - Allow user-provided environment (.ssh/environment) if you want TERM etc.
-#    - KeepAlive knobs are nice for classroom wifi.
+# --- 5) SSH daemon hygiene (idempotent tweaks) ---
 SSHD_CFG="/etc/ssh/sshd_config"
-sed -i 's/^#\?PasswordAuthentication .*/PasswordAuthentication no/' "${SSHD_CFG}"
-sed -i 's/^#\?PermitUserEnvironment .*/PermitUserEnvironment yes/' "${SSHD_CFG}"
+
+# Disable password auth; we rely on keys from authorized_keys.
+sed -i 's/^#\?PasswordAuthentication .*/PasswordAuthentication no/' "${SSHD_CFG}" || true
+
+# Allow user env (useful for TERM, custom tweaks via ~/.ssh/environment).
+sed -i 's/^#\?PermitUserEnvironment .*/PermitUserEnvironment yes/' "${SSHD_CFG}" || true
+
+# Keep-alive to help with flaky Wi-Fi in classrooms.
 grep -q '^ClientAliveInterval' "${SSHD_CFG}" || echo 'ClientAliveInterval 60' >> "${SSHD_CFG}"
-grep -q '^ClientAliveCountMax' "${SSHD_CFG}" || echo 'ClientAliveCountMax 3' >> "${SSHD_CFG}"
+grep -q '^ClientAliveCountMax' "${SSHD_CFG}" || echo 'ClientAliveCountMax 3'  >> "${SSHD_CFG}"
 
-# 6) Print a helpful banner once (goes to container logs).
-echo "Workshop image ready. SSH user=${USER_NAME} uid=${USER_UID} gid=${USER_GID}" >&2
+# Ensure runtime directory exists (normally created in Dockerfile; safe to re-assert).
+mkdir -p /var/run/sshd
 
-# 7) Exec the final command (from CMD) as root; sshd must start as root to bind 22.
-#    Users will get their own shell from sshd with the correct UID.
+# --- 6) Banner to logs for debugging ---
+echo "Workshop image ready: user=${USER_NAME} uid=${USER_UID} gid=${USER_GID}" >&2
+
+# --- 7) Start the main process (from CMD) ---
+# Keep running as root because sshd must bind to 22. SSH sessions will drop users to USER_NAME.
 exec "$@"
