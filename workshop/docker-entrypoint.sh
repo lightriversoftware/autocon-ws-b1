@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Default SHELL if not provided via environment
+: "${SHELL:=/bin/bash}"
+
 # --- 0) Inputs expected from `docker run -e ...` ---
 # USER_NAME : login name to create (e.g., "spatel")
 # USER_UID  : numeric UID to match host user (avoids permission issues)
 # USER_GID  : numeric GID to match host user's primary group
-# SHELL     : preferred shell (usually /bin/bash)
+# SHELL     : preferred shell (defaults to /bin/bash)
 
 # --- 1) Ensure group + user exist with requested IDs ---
 # Create (or reuse) a group with GID=USER_GID. If it already exists under
@@ -26,7 +29,6 @@ HOME_DIR="/home/${USER_NAME}"
 # Some hosts mount either ~/.ssh or just authorized_keys read-only into the container.
 # We only create/chmod when paths are writable.
 
-# Create ~/.ssh if possible (it's usually writable; authorized_keys may be RO).
 mkdir -p "${HOME_DIR}/.ssh" 2>/dev/null || true
 
 # If the directory itself is writable, enforce 700 perms.
@@ -49,17 +51,26 @@ chown "${USER_UID}:${USER_GID}" "${HOME_DIR}" 2>/dev/null || true
 chown "${USER_UID}:${USER_GID}" "${HOME_DIR}/.ssh" 2>/dev/null || true
 chown "${USER_UID}:${USER_GID}" "${HOME_DIR}/.ssh/authorized_keys" 2>/dev/null || true
 
-# --- 3) Convenience symlink to baked workshop content ---
-# Students get ~/workshop → /opt/workshop (baked into the image).
-if [ ! -e "${HOME_DIR}/workshop" ]; then
-  ln -s /opt/workshop "${HOME_DIR}/workshop" 2>/dev/null || true
-  chown -h "${USER_UID}:${USER_GID}" "${HOME_DIR}/workshop" 2>/dev/null || true
-fi
-
-# --- 4) Writable workspace for student output ---
-# /workspace is where you'll bind-mount host storage; make sure it's owned by the student.
+# --- 3) Writable workspace for participant output ---
 mkdir -p /workspace
 chown "${USER_UID}:${USER_GID}" /workspace 2>/dev/null || true
+
+# --- 4) Copy-once working tree so participant can edit freely ---
+WORK_COPY="/workspace/workshop"
+if [ ! -d "${WORK_COPY}" ]; then
+  if command -v rsync >/dev/null 2>&1; then
+    rsync -a /opt/workshop/ "${WORK_COPY}/"
+  else
+    # Fallback if rsync isn't installed
+    mkdir -p "${WORK_COPY}"
+    cp -a /opt/workshop/. "${WORK_COPY}/"
+  fi
+  chown -R "${USER_UID}:${USER_GID}" "${WORK_COPY}" 2>/dev/null || true
+fi
+
+# Repoint the convenience symlink to the writable copy (force replace)
+ln -sfn "${WORK_COPY}" "${HOME_DIR}/workshop"
+chown -h "${USER_UID}:${USER_GID}" "${HOME_DIR}/workshop" 2>/dev/null || true
 
 # --- 5) SSH daemon hygiene (idempotent tweaks) ---
 SSHD_CFG="/etc/ssh/sshd_config"
@@ -72,7 +83,7 @@ sed -i 's/^#\?PermitUserEnvironment .*/PermitUserEnvironment yes/' "${SSHD_CFG}"
 
 # Keep-alive to help with flaky Wi-Fi in classrooms.
 grep -q '^ClientAliveInterval' "${SSHD_CFG}" || echo 'ClientAliveInterval 60' >> "${SSHD_CFG}"
-grep -q '^ClientAliveCountMax' "${SSHD_CFG}" || echo 'ClientAliveCountMax 3'  >> "${SSHD_CFG}"
+grep -q '^ClientAliveCountMax'  "${SSHD_CFG}" || echo 'ClientAliveCountMax 3'  >> "${SSHD_CFG}"
 
 # Ensure runtime directory exists (normally created in Dockerfile; safe to re-assert).
 mkdir -p /var/run/sshd
