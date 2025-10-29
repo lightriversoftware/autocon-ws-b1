@@ -16,8 +16,13 @@ Follow the installation instructions for your platform: [uv Installation Guide](
 Quick install:
 
 ```bash
-# macOS/Linux
 curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+OR (if you do not have curl)
+
+```bash
+wget -qO- https://astral.sh/uv/install.sh | sh
 ```
 
 ## Project Structure
