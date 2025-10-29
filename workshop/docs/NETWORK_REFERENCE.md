@@ -1,186 +1,106 @@
-# Network Simulator Quick Reference
+# Network Simulator API Reference
 
-A practical guide to the network topology and SDK for building AI agents.
-
----
+Quick reference for building agents that interact with the network simulator.
 
 ## Network Overview
 
-### Topology
-- **48 Network Nodes** distributed across eastern United States
-- **~200 Edges** (bidirectional connections between nodes)
-- **~100 Services** already provisioned
-- Geographic routing with real distances
+- **48 nodes** across eastern US (Albany, Boston, NYC, Miami, etc.)
+- **~200 edges** (bidirectional connections between nodes)
+- **Geographic routing** with real distances
+- **Capacity constraints** on both nodes and edges
 
-### Node Characteristics
-- **Location**: Real city coordinates (latitude/longitude)
-- **Capacity**: 200-5000 Gbps per node
-- **Vendors**: Multiple vendors (Suomi Networks, Agave Networks, Toscana Systems, etc.)
-- **Free Capacity**: Available bandwidth for new services
-
-### Edge (Connection) Characteristics
-- **Capacity**: Varies per edge (typically 50-100 Gbps)
-- **Utilization**: Currently ~6% average
-- **Bidirectional**: Can route traffic both ways
-- **Geographic Distance**: Based on actual node locations
-
-### Service Characteristics
-- **Demand**: Bandwidth requirement (typically 5-10 Gbps)
-- **Path**: Ordered list of nodes traversed
-- **Hops**: Number of edges in the path
-- **Distance**: Total geographic distance in km
-
----
-
-## SDK Quick Reference
-
-### Initialize Client
+## SDK Setup
 
 ```python
 from network_simulator_client import NetworkSimulatorClient
 
-# With context manager (recommended)
-with NetworkSimulatorClient() as client:  # Uses BACKEND_URL from environment
-    # Your code here
-    pass
-
-# Or manual management
 client = NetworkSimulatorClient()  # Uses BACKEND_URL from environment
 # ... use client ...
 client.close()
+
+# Or with context manager:
+with NetworkSimulatorClient() as client:
+    # Your code here
+    pass
 ```
 
----
+## Core Data Models
 
-## Common Operations
-
-### 1. Get Network Overview
-
+### Node
 ```python
-# Database statistics
-stats = client.get_database_stats()
-print(f"Nodes: {stats.nodes}, Edges: {stats.edges}, Services: {stats.services}")
-```
-
-### 2. Working with Nodes
-
-```python
-# Get all nodes
-nodes = client.get_nodes()
-
-# Get specific node
-node = client.get_node(node_uuid="uuid-string")
-
-# Search by name (case-insensitive substring)
-matching_nodes = client.search_nodes_by_name("Albany")
-
-# Filter by vendor
-cisco_nodes = client.get_nodes(vendor="Suomi Networks")
-
-# Filter by capacity
-high_capacity = client.get_nodes(
-    min_total_capacity=1000.0,
-    max_total_capacity=3000.0
-)
-
-# Filter by available capacity
-available_nodes = client.get_nodes(min_free_capacity=100.0)
-
-# Geographic filter (within radius)
-nearby = client.get_nodes(
-    latitude=40.7128,   # NYC
-    longitude=-74.0060,
-    max_distance_km=500.0
-)
-
-# Get node by exact name
-node = client.get_node_by_name_exact("Albany-NY")
-```
-
-**Node Response Fields:**
-```python
-node.uuid                 # Unique identifier
-node.name                 # Human-readable name
+node.uuid                 # Unique ID
+node.name                 # City name (e.g., "Albany-NY")
 node.latitude             # Geographic coordinate
 node.longitude            # Geographic coordinate
 node.vendor               # Equipment vendor
 node.capacity_gbps        # Total capacity
 node.free_capacity_gbps   # Available capacity
-node.created_at           # Timestamp
-node.updated_at           # Timestamp
 ```
 
-### 3. Working with Edges
-
+### Edge
 ```python
-# Get all edges
-edges = client.get_edges()
-
-# Get specific edge
-edge = client.get_edge(edge_uuid="uuid-string")
-
-# Find edge between two nodes
-edge = client.get_edge_by_endpoints(node1_uuid, node2_uuid)
-```
-
-**Edge Response Fields:**
-```python
-edge.uuid          # Unique identifier
+edge.uuid          # Unique ID
 edge.node1_uuid    # First endpoint
 edge.node2_uuid    # Second endpoint
 edge.capacity_gbps # Edge capacity
-edge.created_at    # Timestamp
-edge.updated_at    # Timestamp
 ```
 
-### 4. Computing Routes
-
+### Service
 ```python
-# Compute route with A* algorithm
+service.uuid                 # Unique ID
+service.name                 # Service name
+service.source_node_uuid     # Start node
+service.destination_node_uuid # End node
+service.demand_gbps          # Bandwidth requirement
+service.hop_count            # Number of edges in path
+service.path_node_uuids      # Ordered list of nodes
+service.path_edge_uuids      # Ordered list of edges
+service.total_distance_km    # Path distance
+```
+
+## Common Operations
+
+### Search Nodes
+```python
+# Search by name
+nodes = client.search_nodes_by_name("Albany")
+
+# Get all nodes
+all_nodes = client.get_nodes()
+
+# Get specific node
+node = client.get_node(uuid)
+```
+
+### Compute Routes
+```python
 route = client.compute_route(
     source_node_uuid=source.uuid,
     destination_node_uuid=dest.uuid,
-    demand_gbps=10.0  # Optional, default: 5.0
+    demand_gbps=10.0
 )
 
-# Access route details
-print(f"Distance: {route.total_distance_km} km")
-print(f"Hops: {route.hop_count}")
-print(f"Min capacity: {route.min_available_capacity} Gbps")
-print(f"Computation time: {route.computation_time_ms} ms")
-print(f"Path nodes: {route.path_node_uuids}")
-print(f"Path edges: {route.path_edge_uuids}")
+# Route includes:
+# - path_node_uuids: ordered list of nodes
+# - path_edge_uuids: ordered list of edges
+# - total_distance_km: path distance
+# - hop_count: number of edges
+# - min_available_capacity: bottleneck capacity
 ```
 
-**Route Response Fields:**
+### Validate Paths
 ```python
-route.source_node_uuid          # Start node
-route.destination_node_uuid     # End node
-route.path_node_uuids           # Ordered list of nodes
-route.path_edge_uuids           # Ordered list of edges
-route.total_distance_km         # Geographic distance
-route.hop_count                 # Number of edges
-route.min_available_capacity    # Bottleneck capacity
-route.computation_time_ms       # Algorithm runtime
-route.demand_gbps               # Requested bandwidth
+validation = client.validate_path(
+    path_node_uuids=["uuid1", "uuid2", "uuid3"],
+    path_edge_uuids=["edge1", "edge2"],
+    demand_gbps=10.0
+)
+
+# Returns: {"valid": True/False, "errors": [...], ...}
 ```
 
-### 5. Managing Services
-
+### Create Services
 ```python
-# Get all services
-services = client.get_services(limit=100)
-
-# Get specific service
-service = client.get_service(service_uuid="uuid-string")
-
-# Get services by source node
-node_services = client.get_services_by_node(node_uuid)
-
-# Get services traversing an edge
-edge_services = client.get_services_by_edge(edge_uuid)
-
-# Create new service
 from network_simulator_client.models import ServiceCreate
 from datetime import datetime
 
@@ -195,149 +115,116 @@ service_data = ServiceCreate(
     total_distance_km=route.total_distance_km,
     service_timestamp=datetime.utcnow().isoformat() + "Z"
 )
-created = client.create_service(service_data)
 
-# Delete service (frees capacity)
+created = client.create_service(service_data)
+```
+
+### Manage Services
+```python
+# Get service
+service = client.get_service(service_uuid)
+
+# Get all services
+services = client.get_services(limit=100)
+
+# Delete service
 client.delete_service(service_uuid)
 ```
 
-**Service Response Fields:**
+### Monitor Capacity
 ```python
-service.uuid                 # Unique identifier
-service.name                 # Service name
-service.source_node_uuid     # Start node
-service.destination_node_uuid # End node
-service.demand_gbps          # Bandwidth requirement
-service.hop_count            # Number of hops
-service.total_distance_km    # Path distance
-service.routing_stage        # "stage_a" or "stage_b"
-service.path_node_uuids      # Ordered node list
-service.path_edge_uuids      # Ordered edge list
-service.created_at           # Timestamp
-```
-
-### 6. Capacity Monitoring
-
-```python
-# Get utilization summary for all edges
-summary = client.get_capacity_summary()
-for edge_util in summary[:10]:  # Top 10 most utilized
-    print(f"Edge {edge_util.uuid[:8]}: {edge_util.utilization_pct}%")
-
-# Get specific edge utilization
+# Get edge utilization
 util = client.get_edge_utilization(edge_uuid)
-print(f"Capacity: {util.capacity_gbps} Gbps")
-print(f"Demand: {util.total_demand_gbps} Gbps")
-print(f"Services: {util.service_count}")
-print(f"Utilization: {util.utilization_pct}%")
+# Returns: capacity_gbps, total_demand_gbps, utilization_pct, service_count
 
-# Check for capacity violations
+# Find violations (over 100%)
 violations = client.get_capacity_violations()
-for v in violations:
-    print(f"Edge {v.edge_uuid} oversubscribed by {v.overage} Gbps")
 
-# Get high-utilization edges
+# Find high utilization edges
 high_util = client.get_high_utilization_edges(threshold_pct=80.0)
 ```
 
-### 7. Path Validation
-
+### Create Edges
 ```python
-# Validate path before creating service
-validation = client.validate_path(
-    path_node_uuids=["uuid1", "uuid2", "uuid3"],
-    path_edge_uuids=["edge1", "edge2"],
-    demand_gbps=10.0
+from network_simulator_client.models import EdgeCreate
+
+edge_data = EdgeCreate(
+    node1_uuid=node1.uuid,
+    node2_uuid=node2.uuid,
+    capacity_gbps=100.0
 )
 
-if validation["valid"]:
-    print(f"Path is valid!")
-    print(f"  Distance: {validation['total_distance_km']} km")
-    print(f"  Min capacity: {validation['min_available_capacity']} Gbps")
-else:
-    print("Path is invalid:")
-    for error in validation["errors"]:
-        print(f"  - {error}")
+# Note: Can only create edges where connection already exists
+# This expands capacity, doesn't create new connections
+edge = client.create_edge(edge_data)
 ```
 
----
-
-## Common Patterns for AI Agents
-
-### Pattern 1: Find Best Node for Service
+## Error Handling
 
 ```python
-def find_best_source_node(client, min_capacity=50.0):
-    """Find node with most available capacity."""
-    nodes = client.get_nodes(min_free_capacity=min_capacity)
-    if not nodes:
-        return None
+from network_simulator_client import (
+    NodeNotFoundError,
+    EdgeNotFoundError,
+    ServiceNotFoundError,
+    RouteNotFoundError,
+    ValidationError,
+    APIConnectionError
+)
 
-    # Sort by free capacity
-    best = max(nodes, key=lambda n: n.free_capacity_gbps)
-    return best
+try:
+    route = client.compute_route(source, dest, demand_gbps=100.0)
+except RouteNotFoundError:
+    # No feasible route with that capacity
+    pass
+except NodeNotFoundError:
+    # Invalid node UUID
+    pass
+except APIConnectionError:
+    # Can't connect to simulator
+    pass
 ```
 
-### Pattern 2: Check Route Feasibility
+## Example: Complete Workflow
 
 ```python
-def can_route_service(client, source_uuid, dest_uuid, demand_gbps):
-    """Check if route with capacity exists."""
-    try:
-        route = client.compute_route(source_uuid, dest_uuid, demand_gbps)
-        return route.min_available_capacity >= demand_gbps
-    except RouteNotFoundError:
-        return False
-```
+from network_simulator_client import NetworkSimulatorClient
+from network_simulator_client.models import ServiceCreate
+from datetime import datetime
 
-### Pattern 3: Find Congested Areas
+with NetworkSimulatorClient() as client:
+    # 1. Find nodes
+    sources = client.search_nodes_by_name("Albany")
+    dests = client.search_nodes_by_name("Boston")
 
-```python
-def find_congestion(client, threshold=80.0):
-    """Find edges approaching capacity."""
-    high_util = client.get_high_utilization_edges(threshold_pct=threshold)
-    violations = client.get_capacity_violations()
+    source = sources[0]
+    dest = dests[0]
 
-    return {
-        "high_utilization": len(high_util),
-        "violations": len(violations),
-        "critical_edges": [e.uuid for e in high_util] + [v.edge_uuid for v in violations]
-    }
-```
+    # 2. Compute route
+    route = client.compute_route(
+        source_node_uuid=source.uuid,
+        destination_node_uuid=dest.uuid,
+        demand_gbps=10.0
+    )
 
-### Pattern 4: Provision Service Safely
-
-```python
-def provision_service_with_checks(client, source_uuid, dest_uuid, demand_gbps):
-    """Provision service with pre-checks."""
-    # 1. Compute route
-    try:
-        route = client.compute_route(source_uuid, dest_uuid, demand_gbps)
-    except RouteNotFoundError:
-        return {"success": False, "error": "No feasible route"}
-
-    # 2. Validate capacity
-    if route.min_available_capacity < demand_gbps:
-        return {"success": False, "error": "Insufficient capacity"}
+    print(f"Route: {route.hop_count} hops, {route.total_distance_km:.1f} km")
 
     # 3. Validate path
     validation = client.validate_path(
         route.path_node_uuids,
         route.path_edge_uuids,
-        demand_gbps
+        10.0
     )
+
     if not validation["valid"]:
-        return {"success": False, "error": validation["errors"]}
+        print(f"Invalid path: {validation['errors']}")
+        exit(1)
 
     # 4. Create service
-    from network_simulator_client.models import ServiceCreate
-    from datetime import datetime
-
-    service = ServiceCreate(
-        name=f"Service-{datetime.now().strftime('%Y%m%d%H%M%S')}",
-        source_node_uuid=source_uuid,
-        destination_node_uuid=dest_uuid,
-        demand_gbps=demand_gbps,
+    service_data = ServiceCreate(
+        name="Albany-to-Boston-10G",
+        source_node_uuid=source.uuid,
+        destination_node_uuid=dest.uuid,
+        demand_gbps=10.0,
         routing_stage="stage_a",
         path_node_uuids=route.path_node_uuids,
         path_edge_uuids=route.path_edge_uuids,
@@ -345,122 +232,20 @@ def provision_service_with_checks(client, source_uuid, dest_uuid, demand_gbps):
         service_timestamp=datetime.utcnow().isoformat() + "Z"
     )
 
-    created = client.create_service(service)
-    return {"success": True, "service_uuid": created.uuid}
+    service = client.create_service(service_data)
+    print(f"Created service: {service.uuid}")
 ```
 
----
+## API Documentation
 
-## Error Handling
+For complete API reference, see interactive docs when simulator is running:
+- **Swagger UI**: http://localhost:8003/docs
+- **ReDoc**: http://localhost:8003/redoc
 
-### Exception Hierarchy
+## Tips
 
-```python
-from network_simulator_client import (
-    NetworkSimulatorError,        # Base exception
-    APIConnectionError,            # Can't connect to API
-    APITimeoutError,               # Request timed out
-    NodeNotFoundError,             # Node doesn't exist
-    EdgeNotFoundError,             # Edge doesn't exist
-    ServiceNotFoundError,          # Service doesn't exist
-    RouteNotFoundError,            # No feasible route
-    ValidationError,               # Invalid input
-    ResourceConflictError,         # Can't delete (referenced)
-)
-```
-
-### Handling Common Errors
-
-```python
-try:
-    route = client.compute_route(source, dest, demand_gbps=100.0)
-except RouteNotFoundError:
-    print("No route with sufficient capacity")
-except NodeNotFoundError:
-    print("One or both nodes don't exist")
-except APITimeoutError:
-    print("Request timed out - API may be slow")
-except APIConnectionError:
-    print("Can't connect - is the simulator running?")
-```
-
----
-
-## Performance Tips
-
-1. **Use context managers** - Automatic connection cleanup
-2. **Batch operations** - Get all nodes once, filter in memory
-3. **Cache node lookups** - UUIDs don't change during execution
-4. **Check capacity first** - Before computing expensive routes
-5. **Validate before provisioning** - Catch errors early
-
----
-
-## Network Statistics (Typical)
-
-- **Nodes**: 48
-- **Edges**: 200
-- **Services**: 100
-- **Average node capacity**: 1,625 Gbps
-- **Average edge capacity**: 70 Gbps
-- **Average utilization**: 6.2%
-- **Average path hops**: 3-4 hops
-- **Network health**: Excellent (no violations)
-
----
-
-## Useful Code Snippets
-
-### Get Network Summary
-
-```python
-def print_network_summary(client):
-    stats = client.get_database_stats()
-    violations = client.get_capacity_violations()
-    high_util = client.get_high_utilization_edges(80.0)
-
-    print(f"Network: {stats.nodes}N / {stats.edges}E / {stats.services}S")
-    print(f"Violations: {len(violations)}")
-    print(f"High utilization (≥80%): {len(high_util)}")
-```
-
-### Find Node by City
-
-```python
-def find_node_by_city(client, city_name):
-    """Find node by partial city name match."""
-    results = client.search_nodes_by_name(city_name)
-    if not results:
-        return None
-    # Return first match
-    return results[0]
-```
-
-### Calculate Path Distance
-
-```python
-from network_simulator_client.utils import haversine_distance
-
-def calculate_direct_distance(client, node1_uuid, node2_uuid):
-    """Calculate straight-line distance between nodes."""
-    node1 = client.get_node(node1_uuid)
-    node2 = client.get_node(node2_uuid)
-
-    return haversine_distance(
-        node1.latitude, node1.longitude,
-        node2.latitude, node2.longitude
-    )
-```
-
----
-
-## For More Information
-
-- **Full SDK Documentation**: `../README.md`
-- **API Interactive Docs**: ${BACKEND_URL}/docs
-- **Test Report**: `../TEST_REPORT.md`
-- **Example Scripts**: `../examples/`
-
----
-
-**Ready to build agents?** → Start with [EXERCISE_GUIDE.md](EXERCISE_GUIDE.md)
+1. **Always validate** paths before creating services
+2. **Check capacity** - `compute_route()` respects capacity constraints
+3. **Use context managers** - ensures connections are closed properly
+4. **Handle errors** - network operations can fail for many reasons
+5. **Test incrementally** - verify each operation works before chaining them
