@@ -10,7 +10,7 @@ Install dependencies using [uv](https://docs.astral.sh/uv/):
 uv sync
 ```
 
-Activate the created virtual environment.
+Activate the created virtual environment. Please note that this should be different than the virtual environment used for the `workshop` files.
 
 ```bash
 source .venv/bin/activate
