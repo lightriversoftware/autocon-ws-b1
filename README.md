@@ -1,4 +1,4 @@
-# AutoCon
+# AutoCon Workshop B1
 
 A network simulation and automation workshop project.
 
@@ -27,18 +27,23 @@ wget -qO- https://astral.sh/uv/install.sh | sh
 
 ## Project Structure
 
-### Network Simulator
+```
+autocon/
+├── network_simulator/     # Backend API server
+│   ├── src/              # FastAPI application code
+│   ├── data/             # SQLite database storage
+│   ├── output/           # Generated network diagrams
+│   ├── migrations/       # Database schema changes
+│   └── scripts/          # Utility scripts (reset DB, etc.)
+│
+└── workshop/             # Workshop exercises
+    ├── network_simulator_client/  # Python client library for API
+    ├── solutions/        # Reference solutions for exercises
+    └── docs/             # Exercise instructions
+```
 
-The `network_simulator/` directory contains the backend webserver for the workshop. This server manages and stores:
+**network_simulator**: FastAPI server that stores network topology (nodes, edges, services). Run this first - it's the backend for all workshop exercises.
 
-- Node information
-- Edge (connection) information
-- Service information
+**workshop**: Contains the Python client to interact with the API, plus exercises and solutions for building network automation tools.
 
-For detailed information about the network simulator, see the [Network Simulator README](./network_simulator/README.md).
-
-### Workshop
-
-The `workshop/` directory contains the files for the actual workshop, including exercises and solutions.
-
-For workshop setup and exercise instructions, see the [Workshop README](./workshop/README.md).
+See [Network Simulator README](./network_simulator/README.md) and [Workshop README](./workshop/README.md) for detailed setup.
