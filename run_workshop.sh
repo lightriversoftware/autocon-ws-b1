@@ -29,6 +29,7 @@ docker run -d \
  --name "${CONTAINER_NAME}" \
     --hostname "${CONTAINER_NAME}" \
  --restart unless-stopped \
+ --network lab-network \
  -p "${PORT}:22" \
     -e USER_NAME="${USER_NAME}" \
  -e USER_UID="${UID_NUM}" \
