@@ -10,6 +10,12 @@ Install dependencies using [uv](https://docs.astral.sh/uv/):
 uv sync
 ```
 
+Activate the created virtual environment.
+
+```bash
+source .venv/bin/activate
+```
+
 ## Running the Simulator
 
 Start the web server:
