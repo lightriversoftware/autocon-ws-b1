@@ -1,6 +1,8 @@
 """
 Demonstration of database query capabilities.
-Shows powerful queries enabled by the SQLite migration.
+
+Usage:
+    uv run python scripts/demo_database_queries.py
 """
 
 import sys

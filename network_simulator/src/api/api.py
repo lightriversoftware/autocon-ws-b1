@@ -228,49 +228,18 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Network Simulator API",
     description="""
-    # Network Simulator REST API
+    REST API for managing network topology with 48 nodes, 200+ edges, and 100+ routed services.
 
-    A comprehensive REST API for managing network topology data and analyzing network capacity.
+    **Features:**
+    - Full CRUD operations for nodes, edges, and services
+    - Capacity tracking and utilization analytics
+    - A* pathfinding with capacity constraints
+    - Geographic filtering and advanced queries
+    - SQLite backend with UUID-based referential integrity
 
-    ## Overview
+    **Quick Start:** Try `GET /health` → `GET /nodes` → `GET /analytics/stats`
 
-    This API provides full CRUD operations for a simulated network infrastructure consisting of:
-    - **48 Network Nodes** across the eastern United States
-    - **200+ Network Connections** with capacity constraints
-    - **100+ Routed Services** with path tracking
-
-    ## Features
-
-    ### Node Management
-    Create, read, update, and delete network elements with geographic coordinates, vendor information, and capacity specifications.
-
-    ### Edge Management
-    Manage bidirectional connections between nodes with capacity constraints and utilization tracking.
-
-    ### Analytics & Capacity
-    Query capacity utilization, identify bottlenecks, and analyze network statistics in real-time.
-
-    ### Advanced Filtering
-    Filter nodes by vendor and minimum capacity. Query edges by endpoints. Track services by node or edge usage.
-
-    ## Data Model
-
-    - **UUIDs**: All entities use UUID-based identifiers for referential integrity
-    - **SQLite Database**: Single source of truth with ACID guarantees
-    - **Capacity Tracking**: Pre-computed utilization metrics for performance
-    - **Path Validation**: All service paths are validated for connectivity
-
-    ## Getting Started
-
-    1. **Health Check**: `GET /health` - Verify API and database connectivity
-    2. **List Nodes**: `GET /nodes` - View all network elements
-    3. **View Statistics**: `GET /analytics/stats` - Get network overview
-    4. **Explore**: Use the interactive endpoints below to test the API
-
-    ## Support
-
-    - **Interactive Documentation** - You are here!
-    - **[Alternative Docs](/redoc)** - Clean, scrollable documentation
+    See [ReDoc](/redoc) for detailed documentation.
     """,
     version="1.0.0",
     docs_url="/docs",
