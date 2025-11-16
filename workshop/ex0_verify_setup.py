@@ -59,30 +59,30 @@ def check_api_key():
 
     status = True
 
-    api_key = os.getenv("AZURE_OPENAI_API_KEY")
+    api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
-        print("✗ AZURE_OPENAI_API_KEY not set")
+        print("✗ OPENAI_API_KEY not set")
         print("\t-> Check that your API key is correctly formatted")
         status = False
     else:
         masked_key = api_key[:7] + "..." + api_key[-4:]
-        print(f"✓ Azure OpenAI API key configured ({masked_key})")
+        print(f"✓ OpenAI API key configured ({masked_key})")
 
-    endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+    endpoint = os.getenv("OPENAI_ENDPOINT")
     if not endpoint:
-        print("✗ AZURE_OPENAI_ENDPOINT not set")
+        print("✗ OPENAI_ENDPOINT not set")
         print("\t-> Check that your API endpoint is correctly formatted")
         status = False
     else:
-        print(f"✓ Azure OpenAI endpoint configured ({endpoint})")
+        print(f"✓ OpenAI endpoint configured ({endpoint})")
 
-    deployment = os.getenv("AZURE_OPENAI_DEPLOYMENT")
+    deployment = os.getenv("OPENAI_DEPLOYMENT")
     if not deployment:
-        print("✗ AZURE_OPENAI_DEPLOYMENT not set")
+        print("✗ OPENAI_DEPLOYMENT not set")
         print("\t-> Check that your model deployment is correctly formatted")
         status = False
     else:
-        print(f"✓ Azure OpenAI deployment configured ({deployment})")
+        print(f"✓ OpenAI deployment configured ({deployment})")
 
     client = OpenAI(
         api_key=api_key,

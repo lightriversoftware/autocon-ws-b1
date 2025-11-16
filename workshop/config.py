@@ -5,11 +5,11 @@ from openai import AsyncOpenAI
 load_dotenv()
 
 
-azure_deployment = os.getenv("AZURE_OPENAI_DEPLOYMENT")
-azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+deployment = os.getenv("OPENAI_DEPLOYMENT")
+endpoint = os.getenv("OPENAI_ENDPOINT")
 
 llm_client = AsyncOpenAI(
-    api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-    base_url=azure_endpoint,
+    api_key=os.getenv("OPENAI_API_KEY"),
+    base_url=endpoint,
 )
-GENERATIVE_MODEL = azure_deployment
+GENERATIVE_MODEL = deployment
