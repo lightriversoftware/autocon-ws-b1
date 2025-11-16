@@ -1,5 +1,8 @@
 """
 Clear services from database for testing.
+
+Usage:
+    uv run python scripts/clear_services.py
 """
 
 import sys

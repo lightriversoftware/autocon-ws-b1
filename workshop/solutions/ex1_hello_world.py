@@ -1,13 +1,10 @@
 #!/usr/bin/env python3
 """
-Workshop Support Agent - Exercise 4 Solution
-
-A support agent that helps workshop participants understand the network simulator
-and OpenAI Agents SDK without using any tools.
+Excercise 1 - Building Your First Agent
+This is a reference solution, you CANNOT run this file from the solutions directory...
 """
 import asyncio
 import textwrap
-from datetime import datetime
 from colorama import Fore, Style, init as colorama_init
 from agents import Agent, OpenAIChatCompletionsModel, set_tracing_disabled, Runner
 from dotenv import load_dotenv
@@ -16,100 +13,36 @@ from config import llm_client, GENERATIVE_MODEL
 # Load environment variables
 load_dotenv()
 
-with open("./docs/SETUP.md", "r", encoding="utf-8") as f:
-    setup_docs = f.read()
+# ================================================================
+# ===                     BEGIN EDIT ZONE                     ===
+# ===  Participants: modify the code between these markers.   ===
+# ================================================================
 
-with open("./docs/README.md", "r", encoding="utf-8") as f:
-    readme_docs = f.read()
+# This is the system prompt.
+# It allows us to guide the agent's behavior, provide context about the problem space, and recommend solution paths.
+# It is also an integral part of establishing acceptable language, tone, and response formats.
 
-with open("./docs/NETWORK_REFERENCE.md", "r", encoding="utf-8") as f:
-    net_ref_docs = f.read()
+SYSTEM_PROMPT = """
+You are a kind, friendly, and charming conversationalist. 
+Respond to the user in a way that allows for an engaging conversation.
 
-with open("./docs/EXERCISE_GUIDE.md", "r", encoding="utf-8") as f:
-    ex_guide_docs = f.read()
-
-WORKSHOP_DOCS = f"""
-NETWORK SIMULATOR OVERVIEW:
-- 48 nodes distributed across eastern US
-- ~200 bidirectional edges (connections)
-- ~100 services already provisioned
-- Geographic routing with real distances
-- Capacity constraints on nodes and edges
-
-KEY SDK METHODS:
-- client.get_nodes() - Retrieve all network nodes
-- client.get_node(uuid) - Get specific node details
-- client.search_nodes_by_name(substring) - Find nodes by name
-- client.compute_route(source, dest, demand_gbps) - A* pathfinding
-- client.create_service(service_data) - Provision a service
-- client.get_capacity_summary() - Check network utilization
-- client.get_capacity_violations() - Find oversubscribed edges
-
-OPENAI AGENTS SDK:
-- Import: from agents import Agent, Runner
-- Create agent: Agent(name="Name", instructions="...")
-- Run agent: Runner.run_sync(agent, "prompt") or await Runner.run(agent, "prompt")
-- Agents have: name, instructions, tools (optional), handoffs (optional)
-- Results have: final_output property with agent response
-
-WORKSHOP EXERCISES:
-1. Generative AI Frameworks - Compare LangChain vs OpenAI Agents SDK
-2. Agentic Design Patterns - Centralized vs decentralized
-3. Segmentation - Divide responsibilities effectively
-4. Support Agent - Build agent without tools (this one!)
-5. Network Problem - Understand the topology
-6. Planning Agent - Find routes with capacity checking
-7. Provisioning Agent - Create services on network
-8. Iterative Improvement - Refine prompts and flows
-9. Full Workflow - Integrate all agents
-
-Supporting Documentation:
-
-# Setup Information
-{setup_docs}
-
-# README.md 
-{readme_docs}
-
-# Network Reference
-{net_ref_docs}
-
-# Exercise Guide
-{ex_guide_docs}
+Be sure to begin each reply with the phrase "Hello World!"
 """
 
-# Create the support agent
-support_agent = Agent(
-    name="SupportAgent",
-    instructions=f"""
-You are a helpful workshop assistant for "Building AI Agents for Smarter Networks".
+# Try to editing the prompt above in creative and unique ways.
+# In this example, all that the agent knows is within the underlying model's knowledge space and the prompt above.
+# Perhaps you can give the agent a new name, give it some knowledge on a specific topic, or change the format with which it responds to you...
 
-Your role:
-- Help participants understand the network simulator and SDK
-- Provide hints and guidance for exercises without giving complete solutions
-- Explain OpenAI Agents SDK concepts clearly
-- Stay encouraging and patient
-
-Here is the workshop documentation:
-{WORKSHOP_DOCS}
-
-Key points:
-- Give hints, not complete code solutions
-- If asked about tools, explain you don't have access to execute anything
-- For SDK questions, show small example snippets
-- For exercise help, guide without solving completely
-- Be concise but thorough
-
-What you DON'T do:
-- Execute code or call APIs  
-- Access the actual network
-- Provide complete exercise solutions (hints only!)
-- Make up information not in the documentation
-
-If you don't know something, say so and suggest where to look (SETUP.md, NETWORK_REFERENCE.md, EXERCISE_GUIDE.md).
-""",
+hello_world_agent = Agent(
+    name="ConversationalAgent",
+    instructions=SYSTEM_PROMPT,
     model=OpenAIChatCompletionsModel(model=GENERATIVE_MODEL, openai_client=llm_client),
 )
+
+# ================================================================
+# ===                      END EDIT ZONE                      ===
+# ===      Do not modify anything beyond this point.          ===
+# ================================================================
 
 
 def get_multiline_input() -> str:
@@ -209,13 +142,13 @@ async def main() -> None:
             # First turn: pass string directly
             # Subsequent turns: combine to_input_list() with new user message
             if conversation_history is None:
-                result = await Runner.run(support_agent, user_input)
+                result = await Runner.run(hello_world_agent, user_input)
             else:
                 # Append new user message to history in proper format
                 new_input = conversation_history + [
                     {"role": "user", "content": user_input}
                 ]
-                result = await Runner.run(support_agent, new_input)
+                result = await Runner.run(hello_world_agent, new_input)
 
             # Clear processing indicator and print the agent's response
             print(" " * 20, end="\r")  # Clear the processing message

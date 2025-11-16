@@ -1,5 +1,8 @@
 """
 Test script to verify database functionality.
+
+Usage:
+    uv run python scripts/test_database.py
 """
 
 import sys

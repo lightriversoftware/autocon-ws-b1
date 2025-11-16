@@ -1,6 +1,9 @@
 """
 Database verification script.
 Validates all constraints on services, nodes, and edges using SQL queries.
+
+Usage:
+    uv run python scripts/verify_database.py
 """
 
 import sys

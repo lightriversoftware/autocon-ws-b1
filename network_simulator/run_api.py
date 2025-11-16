@@ -3,7 +3,7 @@
 Simple script to run the Network Simulator FastAPI server.
 
 Usage:
-    python run_api.py
+    uv run python run_api.py
 
 The API will be available at:
     - Swagger UI: http://localhost:8003/docs

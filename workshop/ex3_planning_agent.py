@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
 """
-Network Planning Agent - Exercise 2
-
-A simple testing agent with comprehensive tools for interacting with the
-Network Simulator API. This agent validates the plumbing and functionality
-of all network endpoints.
+Exercise 3 - Multiple Tools and Multiple Turns
 """
 import asyncio
 import json
@@ -17,6 +13,7 @@ from agents import (
     set_tracing_disabled,
     function_tool,
     Runner,
+    ModelSettings,
 )
 from dotenv import load_dotenv
 from config import llm_client, GENERATIVE_MODEL
@@ -24,6 +21,11 @@ from network_simulator_client import NetworkSimulatorClient
 
 # Load environment variables
 load_dotenv()
+
+# ================================================================
+# ===                     BEGIN EDIT ZONE                      ===
+# ===  Participants: modify the code between these markers.    ===
+# ================================================================
 
 
 @function_tool
@@ -328,8 +330,13 @@ planning_agent = Agent(
         get_node_services,
         find_and_plan_route,
     ],
-    # model_settings=ModelSettings(reasoning=None),
+    model_settings=ModelSettings(reasoning=None),
 )
+
+# ================================================================
+# ===                      END EDIT ZONE                       ===
+# ===      Do not modify anything beyond this point.           ===
+# ================================================================
 
 
 def get_multiline_input() -> str:
