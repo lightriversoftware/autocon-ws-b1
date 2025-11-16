@@ -34,72 +34,17 @@ load_dotenv()
 # Theres some great reading here: https://openai.github.io/openai-agents-python/tools/
 
 
-@function_tool
-async def get_nodes_by_location(
-    latitude: float, longitude: float, max_distance_km: float
-) -> str:
+async def get_nodes_by_location(args) -> object:
     """
-    TODO: Write a tool description.
+    TODO: Fill out the tool agruments and definiton. Then, write a tool description.
     What does this tool do?
     What arguments does it take?
     What does the output look like?
     When should the agent call this tool?
     """
-    client = NetworkSimulatorClient()  # Uses BACKEND_URL from environment
+    pass
 
-    try:
-        nodes = client.get_nodes(
-            latitude=latitude, longitude=longitude, max_distance_km=max_distance_km
-        )
-
-        result_nodes = []
-        for node in nodes:
-            # Calculate distance using haversine (approximation for display)
-
-            lat1, lon1 = radians(latitude), radians(longitude)
-            lat2, lon2 = radians(node.latitude), radians(node.longitude)
-
-            dlat = lat2 - lat1
-            dlon = lon2 - lon1
-
-            a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
-            c = 2 * atan2(sqrt(a), sqrt(1 - a))
-            distance_km = 6371.0 * c  # Earth's radius in km
-
-            result_nodes.append(
-                {
-                    "uuid": node.uuid,
-                    "name": node.name,
-                    "latitude": node.latitude,
-                    "longitude": node.longitude,
-                    "vendor": node.vendor,
-                    "capacity_gbps": node.capacity_gbps,
-                    "free_capacity_gbps": node.free_capacity_gbps,
-                    "distance_km": round(distance_km, 2),
-                }
-            )
-
-        return json.dumps(
-            {
-                "center_latitude": latitude,
-                "center_longitude": longitude,
-                "radius_km": max_distance_km,
-                "node_count": len(result_nodes),
-                "nodes": result_nodes,
-            }
-        )
-
-    except Exception as e:
-        return json.dumps(
-            {
-                "error": str(e),
-                "center_latitude": latitude,
-                "center_longitude": longitude,
-                "radius_km": max_distance_km,
-            }
-        )
-    finally:
-        client.close()
+    # refer to the README to fill this bit out...
 
 
 SYSTEM_PROMPT = """
@@ -114,7 +59,7 @@ node_finder_agent = Agent(
     instructions=SYSTEM_PROMPT,
     model=OpenAIResponsesModel(model=GENERATIVE_MODEL, openai_client=llm_client),
     tools=[
-        get_nodes_by_location,
+        # tool name goes here...
     ],
     # We can adjust the reasoning level. Valid options are [None, "minimal", "low", "medium", "high"]
     model_settings=ModelSettings(reasoning=None),
