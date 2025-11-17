@@ -1,6 +1,6 @@
 # AutoCon 4 Workshop B1: Building AI Agents for Smarter Networks
 
-Welcome! This repository contains hands-on exercises for building AI agents that interact with network infrastructure through a simulated (and signficantly simplified!) network environment. You will learn to create agents that can chat, call tools, run workflows, and communicate with other agents.
+Welcome! This repository contains hands-on exercises for building AI agents that interact with network infrastructure through a simulated (and significantly simplified!) network environment. You will learn to create agents that can chat, call tools, run workflows, and communicate with other agents.
 
 Presentor Information:
 
@@ -89,9 +89,9 @@ You should see a version number printed (e.g., `uv 0.8.5` or similar).
 
 #### Step 2: Setup Environment
 
-This workshop has to distinct components, as explained above. The `network_simulator/` exists to provide your agents a system to interact with. It relies on a number of key dependencies, `pandas`, `numpy`, `networkx`, `fastapi`, among others. Similarly, it has no dependency on any of the OpenAI SDK packages that the files in `workshop/` are dependent on. Therefore, we'll create two distinct **virtual environments** to run each of these components. In addition to the right environment/dependencies, we'll also need to set some environment variables in the `workshop/` directory to correctly configure the API calls or files will be making.
+This workshop has two distinct components, as explained above. The `network_simulator/` exists to provide your agents a system to interact with. It relies on a number of key dependencies, `pandas`, `numpy`, `networkx`, `fastapi`, among others. Similarly, it has no dependency on any of the OpenAI SDK packages that the files in `workshop/` are dependent on. Therefore, we'll create two distinct **virtual environments** to run each of these components. In addition to the right environment/dependencies, we'll also need to set some environment variables in the `workshop/` directory to correctly configure the API calls or files will be making.
 
-**Network Similator Setup**
+**Network Simulator Setup**
 
 ```bash
 cd <path-to-workshop-files>/autocon-ws-b1/network_simulator
