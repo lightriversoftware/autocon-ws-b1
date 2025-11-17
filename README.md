@@ -530,49 +530,81 @@ async def get_nodes_by_location(
     latitude: float, longitude: float, max_distance_km: float
 ) -> str:
     """
-    TODO: Write a tool description.
-    What does this tool do?
-    What arguments does it take?
-    What does the output look like?
-    When should the agent call this tool?
+    Find network nodes within a specified distance from a geographic point.
+
+    Use this tool to find nodes in a specific geographic region. Useful for
+    finding nearby nodes when planning routes or analyzing regional coverage.
+
+    Args:
+        latitude: Center point latitude in degrees (-90 to 90)
+        longitude: Center point longitude in degrees (-180 to 180)
+        max_distance_km: Maximum search radius in kilometers from the center point
+
+    Returns:
+        JSON string containing:
+        - center_latitude: The search center latitude
+        - center_longitude: The search center longitude
+        - radius_km: The search radius
+        - node_count: Number of nodes found
+        - nodes: List of nodes with details including calculated distance_km from center
+
+    Example:
+        latitude = 40.7128, longitude = -74.0060, max_distance_km = 100.0
+        Finds all nodes within 100km of New York City coordinates
     """
-    client = NetworkSimulatorClient()  # Connect to the API
+    client = NetworkSimulatorClient()  # Uses BACKEND_URL from environment
 
     try:
-        # Query the network simulator for nearby nodes
         nodes = client.get_nodes(
-            latitude=latitude,
-            longitude=longitude,
-            max_distance_km=max_distance_km
+            latitude=latitude, longitude=longitude, max_distance_km=max_distance_km
         )
 
-        # Process and format the results
         result_nodes = []
         for node in nodes:
-            # Calculate actual distance using haversine formula
-            distance_km = calculate_haversine(latitude, longitude,
-                                             node.latitude, node.longitude)
+            # Calculate distance using haversine (approximation for display)
 
-            result_nodes.append({
-                "uuid": node.uuid,
-                "name": node.name,
-                "latitude": node.latitude,
-                "longitude": node.longitude,
-                "capacity_gbps": node.capacity_gbps,
-                "distance_km": round(distance_km, 2),
-            })
+            lat1, lon1 = radians(latitude), radians(longitude)
+            lat2, lon2 = radians(node.latitude), radians(node.longitude)
 
-        # Return structured JSON that the agent can understand
-        return json.dumps({
-            "center_latitude": latitude,
-            "center_longitude": longitude,
-            "radius_km": max_distance_km,
-            "node_count": len(result_nodes),
-            "nodes": result_nodes,
-        })
+            dlat = lat2 - lat1
+            dlon = lon2 - lon1
+
+            a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
+            c = 2 * atan2(sqrt(a), sqrt(1 - a))
+            distance_km = 6371.0 * c  # Earth's radius in km
+
+            result_nodes.append(
+                {
+                    "uuid": node.uuid,
+                    "name": node.name,
+                    "latitude": node.latitude,
+                    "longitude": node.longitude,
+                    "vendor": node.vendor,
+                    "capacity_gbps": node.capacity_gbps,
+                    "free_capacity_gbps": node.free_capacity_gbps,
+                    "distance_km": round(distance_km, 2),
+                }
+            )
+
+        return json.dumps(
+            {
+                "center_latitude": latitude,
+                "center_longitude": longitude,
+                "radius_km": max_distance_km,
+                "node_count": len(result_nodes),
+                "nodes": result_nodes,
+            }
+        )
 
     except Exception as e:
-        return json.dumps({"error": str(e)})
+        return json.dumps(
+            {
+                "error": str(e),
+                "center_latitude": latitude,
+                "center_longitude": longitude,
+                "radius_km": max_distance_km,
+            }
+        )
     finally:
         client.close()
 ```
